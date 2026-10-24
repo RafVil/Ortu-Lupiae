@@ -1,0 +1,16 @@
+{
+  "name": "Ortu Lupiae — spese dell'orto",
+  "short_name": "Ortu Lupiae",
+  "description": "Gestionale delle spese dell'orto e della produzione. I dati restano sul dispositivo.",
+  "lang": "it",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F4EFE4",
+  "theme_color": "#F4EFE4",
+  "icons": [
+    { "src": "icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}

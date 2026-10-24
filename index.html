@@ -1,0 +1,1261 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4EFE4">
+<meta name="description" content="Ortu Lupiae — gestione delle spese dell'orto e della produzione. Dati solo sul dispositivo.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Ortu Lupiae</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icona-192.png">
+<link rel="apple-touch-icon" href="icona-192.png">
+<style>
+/* ============================================================ BASE ==== */
+:root{
+  color-scheme:light;  /* controlli nativi chiari: date, tendine, spunte */
+  /* carta avorio e oliva, come l'etichetta e il marchio */
+  --sfondo:#F4EFE4;
+  --superficie:#FBF8F0;
+  --superficie-alta:#EFE8D8;
+  --bordo:#DED3BC;
+  --testo:#252729;
+  --tenue:#7C7666;
+  --accento:#556B2F;
+  --allarme:#A84838;
+  --ok:#78895E;
+  --serif:"Bodoni MT",Didot,"Bodoni 72",Georgia,"Palatino Linotype","Times New Roman",serif;
+  --raggio:16px;
+  --tocco:48px;
+  --nav:66px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+html{background:#EDE6D6}
+body{
+  min-height:100dvh;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  font-size:16px;
+  line-height:1.45;
+  color:var(--testo);
+  background:radial-gradient(1100px 520px at 12% -12%,#FCF8EE 0%,var(--sfondo) 55%,#EDE6D6 100%);
+  background-attachment:fixed;
+  overscroll-behavior-y:contain;
+}
+h1,h2,h3,p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:inherit}
+
+/* ======================================================= STRUTTURA ==== */
+#app{display:flex;flex-direction:column;min-height:100dvh;overflow-x:hidden}
+#testata{
+  position:sticky;top:0;z-index:20;
+  display:flex;align-items:center;gap:10px;
+  padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;
+  background:rgba(244,239,228,.88);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--bordo);
+}
+#testata .logo{height:34px;width:auto;display:block;flex:none}
+#testata .emblema{font-size:1.02rem;line-height:1;flex:none;width:32px;text-align:center}
+#testata .marchio{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+#testata .marchio strong{font-family:var(--serif);font-size:1.02rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase}
+#testata .marchio span{font-size:.63rem;color:var(--tenue);letter-spacing:.05em;text-transform:uppercase}
+#testata .azioni{margin-left:auto;display:flex;gap:4px;flex:none}
+.icona-btn{
+  width:40px;height:40px;border:1px solid transparent;border-radius:12px;
+  background:transparent;display:grid;place-items:center;font-size:1.05rem;
+}
+.icona-btn:active{background:var(--superficie-alta);border-color:var(--bordo)}
+.icona-btn[hidden]{display:none}
+
+#vista{flex:1;padding:16px 14px calc(var(--nav) + env(safe-area-inset-bottom,0px) + 22px)}
+.contenuto{max-width:620px;margin:0 auto}
+
+h1.titolo{font-family:var(--serif);font-size:1.38rem;font-weight:600;letter-spacing:.005em;margin:2px 0 4px}
+.sottotitolo{font-size:.82rem;color:var(--tenue);margin-bottom:14px}
+
+/* ========================================================= NAV BAR ==== */
+#linguette{
+  position:fixed;left:0;right:0;bottom:0;z-index:30;
+  display:flex;
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  background:rgba(244,239,228,.96);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  border-top:1px solid var(--bordo);
+}
+#linguette button{
+  flex:1 1 0;min-width:0;height:var(--nav);border:0;background:transparent;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--tenue);font-size:.62rem;letter-spacing:.02em;
+  transition:color .15s;
+}
+#linguette button .glifo{font-size:1.22rem;line-height:1;filter:grayscale(.45);opacity:.6}
+#linguette button[aria-current="page"]{color:var(--accento)}
+#linguette button[aria-current="page"] .glifo{filter:none;opacity:1}
+#linguette button:active{background:rgba(85,107,47,.07)}
+
+/* ========================================================= PEZZI ==== */
+.pannello{
+  background:var(--superficie);
+  border:1px solid var(--bordo);
+  border-radius:var(--raggio);
+  padding:16px;
+  margin-bottom:12px;
+}
+.pannello h2{font-family:var(--serif);font-size:.98rem;font-weight:600;letter-spacing:.01em;margin-bottom:10px;color:#57534A}
+
+.card{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  background:var(--superficie);border:1px solid var(--bordo);border-radius:var(--raggio);
+  padding:16px;margin-bottom:10px;min-height:var(--tocco);
+  transition:transform .1s,border-color .15s;
+}
+.card:active{transform:scale(.985);border-color:#C7B99A}
+.card .glifo{font-size:1.5rem;flex:none;width:38px;text-align:center;overflow:hidden;line-height:1.1}
+.card .testi{min-width:0}
+.card .testi strong{display:block;font-size:1rem;font-weight:600;margin-bottom:2px}
+.card .testi span{display:block;font-size:.79rem;color:var(--tenue);line-height:1.35}
+
+.campo{margin-bottom:14px}
+.campo label{display:block;font-size:.78rem;color:var(--tenue);margin-bottom:6px;letter-spacing:.02em}
+.campo input,.campo select,.campo textarea{
+  width:100%;padding:13px 14px;min-height:var(--tocco);
+  background:#FFFDF8;border:1px solid var(--bordo);border-radius:12px;
+  color:var(--testo);font-size:1rem;appearance:none;
+}
+.campo textarea{min-height:74px;resize:vertical;line-height:1.4}
+.campo input:focus,.campo select:focus,.campo textarea:focus{
+  outline:none;border-color:var(--accento);box-shadow:0 0 0 3px rgba(85,107,47,.15)
+}
+.campo select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%237C7666' stroke-width='1.6' stroke-linecap='round'/></svg>");background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+/* le caselle di spunta non devono ereditare lo stile dei campi di testo */
+.campo input[type="checkbox"]{
+  -webkit-appearance:checkbox;appearance:checkbox;accent-color:var(--allarme);
+  width:22px;height:22px;min-height:0;padding:0;border-radius:4px;flex:none;
+  box-shadow:none;
+}
+.campo input[type="checkbox"]:focus{box-shadow:none}
+.riga-campi{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+.bottone{
+  width:100%;min-height:var(--tocco);padding:13px 16px;
+  border-radius:12px;border:1px solid var(--bordo);background:var(--superficie-alta);
+  font-size:.95rem;font-weight:500;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.bottone:active{transform:scale(.99)}
+.bottone.primario{background:var(--accento);border-color:var(--accento);color:#FBF8EF;font-weight:600}
+.bottone.pericolo{background:transparent;border-color:#D3B3AA;color:var(--allarme)}
+.bottone:disabled{opacity:.4;pointer-events:none}
+.bottone.minuto{font-size:.85rem;min-height:42px;padding:10px 14px}
+
+.vuoto{padding:34px 16px;text-align:center;color:var(--tenue);font-size:.9rem}
+
+/* ------------------------------------------------------- bilancio ---- */
+.bilancio{display:flex;gap:18px;align-items:baseline;margin-bottom:2px}
+.bilancio .voce{font-size:.72rem;color:var(--tenue);letter-spacing:.05em;text-transform:uppercase}
+
+/* ------------------------------------------------------- storico ---- */
+.voce-spesa{
+  display:flex;align-items:flex-start;gap:12px;
+  padding:13px 0;border-bottom:1px solid var(--bordo);
+}
+.voce-spesa:last-child{border-bottom:0}
+.voce-spesa .segno{width:4px;align-self:stretch;border-radius:4px;flex:none;margin-top:2px}
+.voce-spesa .corpo{flex:1;min-width:0}
+.voce-spesa .prima{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.voce-spesa .categoria{font-size:.92rem;font-weight:500}
+.voce-spesa .importo{font-size:.98rem;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.voce-spesa .dopo{display:flex;gap:8px;font-size:.74rem;color:var(--tenue);margin-top:2px}
+.voce-spesa .varie{font-size:.79rem;color:#6E6A5E;margin-top:3px;overflow-wrap:anywhere}
+
+/* -------------------------------------------------------- grafici ---- */
+.torta{display:flex;flex-direction:column;align-items:center;gap:14px}
+.torta svg{width:164px;height:auto;flex:none}
+.legenda{width:100%;display:flex;flex-direction:column;gap:7px}
+.legenda .riga{display:flex;align-items:center;gap:8px;font-size:.79rem}
+.legenda .pallino{width:9px;height:9px;border-radius:50%;flex:none}
+.legenda .nome{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.legenda .valore{font-variant-numeric:tabular-nums;color:var(--tenue);white-space:nowrap}
+.legenda .quota{width:44px;text-align:right;font-variant-numeric:tabular-nums;color:var(--tenue)}
+
+.barre{display:flex;gap:6px;align-items:flex-end;height:158px;overflow-x:auto;padding:24px 2px 0;scrollbar-width:none}
+.barre::-webkit-scrollbar{display:none}
+.barre .colonna{flex:1 0 30px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px;min-width:0}
+.barre .valore{font-size:.6rem;color:#4E6229;font-variant-numeric:tabular-nums;white-space:nowrap}
+.barre .asticella{width:100%;max-width:34px;background:linear-gradient(180deg,#78895E,#556B2F);border-radius:8px 8px 3px 3px;min-height:3px}
+.barre .mese{font-size:.66rem;color:var(--tenue);white-space:nowrap}
+
+/* ---------------------------------------------------------- avvisi ---- */
+.avviso-blocco{
+  border-radius:14px;padding:13px 14px;margin-bottom:12px;font-size:.82rem;line-height:1.4;
+  display:flex;gap:10px;align-items:flex-start;
+  overflow-wrap:anywhere;
+}
+.avviso-blocco > div{min-width:0;flex:1}
+.avviso-blocco .glifo{font-size:1.05rem;line-height:1.2;flex:none}
+.avviso-blocco.backup{background:rgba(168,72,56,.07);border:1px solid #DFC1B9;color:#7E3A2E}
+.avviso-blocco.info{background:rgba(85,107,47,.07);border:1px solid #C6CFB2;color:#41521F}
+.avviso-blocco strong{display:block;font-weight:600;margin-bottom:2px}
+.avviso-blocco .bottone{margin-top:9px}
+
+/* ------------------------------------------------------------ toast ---- */
+#brindisi{
+  position:fixed;left:50%;transform:translateX(-50%) translateY(20px);
+  bottom:calc(var(--nav) + env(safe-area-inset-bottom,0px) + 16px);
+  z-index:60;max-width:88vw;padding:12px 18px;border-radius:12px;
+  background:#FBF6EA;border:1px solid #D9CFB8;color:var(--testo);
+  font-size:.86rem;box-shadow:0 10px 30px rgba(37,39,41,.18);
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s;
+  text-align:center;
+}
+#brindisi.mostra{opacity:1;transform:translateX(-50%) translateY(0)}
+#brindisi.errore{background:#F7E6E2;border-color:#DFC1B9;color:#7E3A2E}
+
+/* ----------------------------------------------------------- blocco ---- */
+#blocco{
+  position:fixed;inset:0;z-index:80;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  padding:24px;
+  background:radial-gradient(900px 500px at 50% -10%,#FCF8EE 0%,var(--sfondo) 60%,#EDE6D6 100%);
+}
+#blocco.visibile{display:flex}
+#blocco .logo{height:104px;width:auto;margin-bottom:4px;border-radius:50%}
+#blocco h1{font-family:var(--serif);font-size:1.22rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+#blocco .nota{font-size:.8rem;color:var(--tenue);text-align:center;max-width:280px}
+#blocco .box{width:100%;max-width:320px}
+#blocco input{
+  width:100%;padding:15px;text-align:center;letter-spacing:.28em;font-size:1.1rem;
+  background:#FFFDF8;border:1px solid var(--bordo);border-radius:12px;min-height:var(--tocco);
+}
+#blocco input:focus{outline:none;border-color:var(--accento);box-shadow:0 0 0 3px rgba(85,107,47,.15)}
+#blocco .errore{color:var(--allarme);font-size:.8rem;text-align:center;min-height:1.2em}
+.scuoti{animation:scuoti .32s}
+@keyframes scuoti{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}45%{transform:translateX(8px)}70%{transform:translateX(-5px)}}
+.piede{text-align:center;font-size:.7rem;color:#8C8574;padding:22px 0 4px;letter-spacing:.03em}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <header id="testata">
+    <span class="emblema" aria-hidden="true">🌿</span>
+    <div class="marchio">
+      <strong>Ortu Lupiae</strong>
+      <span>Via di Livenza · Lecce</span>
+    </div>
+    <div class="azioni">
+      <button class="icona-btn" id="btn-backup" title="Backup e impostazioni" aria-label="Backup e impostazioni">⚙️</button>
+      <button class="icona-btn" id="btn-blocca" title="Blocca" aria-label="Blocca l'app" hidden>🔒</button>
+    </div>
+  </header>
+
+  <main id="vista"><div class="contenuto" id="contenuto"></div></main>
+
+  <nav id="linguette" aria-label="Navigazione principale"></nav>
+</div>
+
+<div id="brindisi" role="status" aria-live="polite"></div>
+
+<div id="blocco" role="dialog" aria-modal="true" aria-labelledby="blocco-titolo">
+  <img class="logo" src="logo.png" alt="" onerror="this.style.display='none'">
+  <h1 id="blocco-titolo">Ortu Lupiae</h1>
+  <div class="nota" id="blocco-nota">Accesso riservato</div>
+  <div class="box" id="blocco-box"></div>
+  <div class="errore" id="blocco-errore"></div>
+</div>
+
+<script>
+"use strict";
+
+/* ========================================================== COSTANTI ==== */
+const CHIAVE = "ortulupiae.mobile.v1";
+const VERSIONE = "1.0";
+const AZIONI = ["Aratura","Attrezzi","Concimi","Fitofarmaci","Gestione",
+                "Manutenzione","Piante","Sementi","Taglio"];
+const PALETTE = ["#7A5C3E","#5B7B88","#78895E","#A84838","#6F6A5A","#B5733A","#556B2F","#C69214","#4F7A6A"];
+const GIORNI_BACKUP = 30;       // dopo tanti giorni senza export, avvisa
+const VOCI_BACKUP = 10;         // oppure dopo tante voci nuove senza export
+
+const NAV = [
+  {id:"dashboard",    glifo:"🏠", nome:"Home"},
+  {id:"nuova",        glifo:"🌱", nome:"Nuova"},
+  {id:"storico",      glifo:"📜", nome:"Storico"},
+  {id:"statistiche",  glifo:"📊", nome:"Grafici"},
+  {id:"gestione",     glifo:"🛠️", nome:"Modifica"},
+];
+/* "backup" non sta nella barra in basso: ci si arriva dall'ingranaggio in alto. */
+const VISTE = new Set([...NAV.map(v => v.id), "backup"]);
+
+/* ========================================================== UTILITÀ ==== */
+const $  = (sel, radice = document) => radice.querySelector(sel);
+const euroFmt = new Intl.NumberFormat("it-IT", {minimumFractionDigits:2, maximumFractionDigits:2});
+const euro = n => "€ " + euroFmt.format(Number(n) || 0);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function dataIt(iso){
+  const p = String(iso || "").slice(0,10).split("-");
+  if (p.length !== 3) return String(iso || "");
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
+function oggiIso(){
+  const d = new Date(), p = n => String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+function adessoIt(){
+  const d = new Date(), p = n => String(n).padStart(2,"0");
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function meseIt(chiave){
+  const [a, m] = String(chiave).split("-");
+  return `${m}/${a}`;
+}
+/* Solo per l'asse del grafico: "10/26" sta in una colonna stretta. */
+function meseBreve(chiave){
+  const [a, m] = String(chiave).split("-");
+  return `${m}/${String(a).slice(2)}`;
+}
+function importoDaTesto(testo){
+  let s = String(testo ?? "").replace(/[^\d.,-]/g, "").trim();
+  if (!s) return NaN;
+  if (s.includes(",") && s.includes(".")) s = s.replace(/\./g, "").replace(",", ".");
+  else if (s.includes(",")) s = s.replace(",", ".");
+  const n = Number(s);
+  return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
+}
+function somma(elenco){ return elenco.reduce((a, v) => a + (Number(v.spesa) || 0), 0); }
+function giorniDa(iso){
+  if (!iso) return Infinity;
+  const t = Date.parse(iso);
+  if (!Number.isFinite(t)) return Infinity;
+  return Math.floor((Date.now() - t) / 86400000);
+}
+function vibra(ms){ try { if (navigator.vibrate) navigator.vibrate(ms); } catch(e){} }
+
+/* =========================================================== STATO ==== */
+const STATO_VUOTO = {
+  spese: [],
+  pin: "",
+  ultimaEsportazione: null,
+  vociAllUltimoBackup: 0,
+  inizializzato: false,
+};
+let stato = STATO_VUOTO;
+
+function caricaStato(){
+  try {
+    const grezzo = localStorage.getItem(CHIAVE);
+    if (!grezzo) return clone(STATO_VUOTO);
+    const letto = JSON.parse(grezzo);
+    const unito = Object.assign(clone(STATO_VUOTO), letto);
+    if (!Array.isArray(unito.spese)) unito.spese = [];
+    return unito;
+  } catch (e) {
+    return clone(STATO_VUOTO);
+  }
+}
+function salvaStato(){
+  try {
+    localStorage.setItem(CHIAVE, JSON.stringify(stato));
+    return true;
+  } catch (e) {
+    avviso("Non riesco a salvare: memoria del browser piena o bloccata.", true);
+    return false;
+  }
+}
+function prossimoId(){
+  return stato.spese.reduce((m, v) => Math.max(m, Number(v.id) || 0), 0) + 1;
+}
+
+/* ============================================================ TOAST ==== */
+let timerBrindisi = null;
+function avviso(messaggio, errore = false){
+  const nodo = $("#brindisi");
+  nodo.textContent = messaggio;
+  nodo.classList.toggle("errore", !!errore);
+  nodo.classList.add("mostra");
+  clearTimeout(timerBrindisi);
+  timerBrindisi = setTimeout(() => nodo.classList.remove("mostra"), 2600);
+}
+
+/* ============================================================= VIEW ==== */
+let vistaCorrente = "dashboard";
+let voceScelta = null;      // id selezionato nella pagina Gestione
+let semeOfferto = false;    // dati-iniziali.json già proposto
+let semeLetto = null;
+let importInAttesa = null;  // {voci, nuove} — file letto, in attesa che si scelga cosa farne
+
+const contenuto = () => $("#contenuto");
+
+function vai(id){
+  if (!VISTE.has(id)) id = "dashboard";
+  vistaCorrente = id;
+  voceScelta = null;
+  disegnaLinguette();
+  window.scrollTo({top:0, behavior:"instant"});
+  disegna();
+}
+
+function disegnaLinguette(){
+  const nav = $("#linguette");
+  nav.innerHTML = NAV.map(v => `
+    <button data-vai="${v.id}" ${vistaCorrente === v.id ? 'aria-current="page"' : ""}>
+      <span class="glifo">${v.glifo}</span><span>${v.nome}</span>
+    </button>`).join("");
+  nav.querySelectorAll("[data-vai]").forEach(b => {
+    b.addEventListener("click", () => { vibra(8); vai(b.dataset.vai); });
+  });
+}
+
+function disegna(){
+  const viste = {
+    dashboard: vistaDashboard,
+    nuova: vistaNuova,
+    storico: vistaStorico,
+    statistiche: vistaStatistiche,
+    gestione: vistaGestione,
+    backup: vistaBackup,
+  };
+  const funzione = viste[vistaCorrente] || vistaDashboard;
+  contenuto().innerHTML = funzione();
+  collega();
+}
+
+/* Delego i click: una sola registrazione, funziona con qualsiasi vista. */
+function collega(){
+  contenuto().querySelectorAll("[data-vai]").forEach(el => {
+    el.addEventListener("click", () => { vibra(8); vai(el.dataset.vai); });
+  });
+
+  const formNuova = $("#form-nuova");
+  if (formNuova) formNuova.addEventListener("submit", salvaNuovaSpesa);
+
+  const formMod = $("#form-modifica");
+  if (formMod) formMod.addEventListener("submit", salvaModifica);
+
+  const sel = $("#sel-voce");
+  if (sel) sel.addEventListener("change", () => {
+    voceScelta = sel.value ? Number(sel.value) : null;
+    disegna();
+  });
+
+  const chk = $("#conferma-elimina");
+  const btnEl = $("#btn-elimina");
+  if (chk && btnEl) chk.addEventListener("change", () => { btnEl.disabled = !chk.checked; });
+
+  const btnElimina = $("#btn-elimina");
+  if (btnElimina) btnElimina.addEventListener("click", eliminaVoce);
+
+  const btnSeme = $("#btn-seme");
+  if (btnSeme) btnSeme.addEventListener("click", importaSeme);
+
+  const inputFile = $("#file-importa");
+  if (inputFile) inputFile.addEventListener("change", leggiFileImport);
+
+  const btnImportSost = $("#btn-import-sostituisci");
+  if (btnImportSost) btnImportSost.addEventListener("click", () => applicaImport("sostituisci"));
+
+  const btnImportAgg = $("#btn-import-aggiungi");
+  if (btnImportAgg) btnImportAgg.addEventListener("click", () => applicaImport("aggiungi"));
+
+  const btnImportAnn = $("#btn-import-annulla");
+  if (btnImportAnn) btnImportAnn.addEventListener("click", annullaImport);
+
+  const btnJson = $("#btn-export-json");
+  if (btnJson) btnJson.addEventListener("click", () => esportaJson());
+
+  const btnCsv = $("#btn-export-csv");
+  if (btnCsv) btnCsv.addEventListener("click", () => esportaCsv());
+
+  const btnCond = $("#btn-condividi");
+  if (btnCond) btnCond.addEventListener("click", () => condividi());
+
+  const formPin = $("#form-pin");
+  if (formPin) formPin.addEventListener("submit", cambiaPin);
+
+  const btnTogliPin = $("#btn-togli-pin");
+  if (btnTogliPin) btnTogliPin.addEventListener("click", togliPin);
+
+  const chkAzzera = $("#conferma-azzera");
+  const btnAzzera = $("#btn-azzera");
+  if (chkAzzera && btnAzzera){
+    chkAzzera.addEventListener("change", () => { btnAzzera.disabled = !chkAzzera.checked; });
+    btnAzzera.addEventListener("click", azzeraTutto);
+  }
+}
+
+/* ========================================================= DASHBOARD ==== */
+function vistaDashboard(){
+  const spese = stato.spese;
+  const totale = somma(spese);
+  const nota = spese.length
+    ? `${spese.length} ${spese.length === 1 ? "voce" : "voci"} · ${euro(totale)} di spesa totale`
+    : "Nessuna spesa registrata";
+
+  const carte = [
+    {vai:"nuova",        glifo:"🌱",  titolo:"Nuova spesa",  testo:"Semi, piantine, terriccio, imballaggi per le conserve."},
+    {vai:"storico",      glifo:"📜",  titolo:"Storico",      testo:"Tutte le voci registrate, dalla più recente."},
+    {vai:"statistiche",  glifo:"📊",  titolo:"Statistiche",  testo:"Totale, ripartizione per voce, andamento mensile."},
+    {vai:"gestione",     glifo:"🛠️", titolo:"Modifica",      testo:"Correggi o elimina una voce inserita per errore."},
+  ];
+
+  return `
+    <div class="sottotitolo" style="font-size:.86rem;margin-bottom:14px">${esc(nota)}</div>
+    ${avvisoBackup()}
+    ${!spese.length && semeLetto ? `
+      <div class="avviso-blocco info">
+        <span class="glifo">📥</span>
+        <div>
+          <strong>Ci sono ${semeLetto.length} voci da importare</strong>
+          Le ho trovate accanto all'app: puoi portarle dentro con un tocco.
+          <button class="bottone minuto" id="btn-seme">Importa ${semeLetto.length} voci</button>
+        </div>
+      </div>` : ""}
+    ${carte.map(c => `
+      <button class="card" data-vai="${c.vai}">
+        <span class="glifo">${c.glifo}</span>
+        <span class="testi"><strong>${c.titolo}</strong><span>${c.testo}</span></span>
+      </button>`).join("")}
+    <div class="piede">© 2026 Ortu Lupiae · v${VERSIONE}</div>
+  `;
+}
+
+function avvisoBackup(){
+  if (!stato.spese.length) return "";
+  const giorni = giorniDa(stato.ultimaEsportazione);
+  const nuoveVoci = Math.max(0, stato.spese.length - (stato.vociAllUltimoBackup || 0));
+  if (giorni < GIORNI_BACKUP && nuoveVoci < VOCI_BACKUP) return "";
+
+  const quando = testoBackup(stato.ultimaEsportazione, giorni);
+  return `
+    <div class="avviso-blocco backup">
+      <span class="glifo">⚠️</span>
+      <div>
+        <strong>Backup da fare</strong>
+        ${quando}
+        <button class="bottone minuto" data-vai="backup">Esporta adesso</button>
+      </div>
+    </div>`;
+}
+function testoBackup(iso, giorni){
+  if (!iso) return "Non hai mai esportato una copia: se svuoti i dati del browser, queste voci spariscono.";
+  if (giorni >= GIORNI_BACKUP) return `Ultimo backup ${giorni} giorni fa (${dataIt(iso.slice(0,10))}).`;
+  const nuove = Math.max(0, stato.spese.length - (stato.vociAllUltimoBackup || 0));
+  return `Hai aggiunto ${nuove} voci dopo l'ultimo backup.`;
+}
+
+/* ============================================================= NUOVA ==== */
+function vistaNuova(){
+  return `
+    <h1 class="titolo">Nuova spesa</h1>
+    <div class="sottotitolo">La data è oggi: cambiala solo se serve.</div>
+    <form id="form-nuova" autocomplete="off">
+      <div class="pannello">
+        <div class="campo">
+          <label for="f-data">Data</label>
+          <input type="date" id="f-data" value="${oggiIso()}" required>
+        </div>
+        <div class="campo">
+          <label for="f-azione">Voce di spesa</label>
+          <select id="f-azione">${AZIONI.map(a => `<option>${a}</option>`).join("")}</select>
+        </div>
+        <div class="campo">
+          <label for="f-importo">Importo (€)</label>
+          <input type="text" id="f-importo" inputmode="decimal" placeholder="0,00" required>
+        </div>
+        <div class="campo">
+          <label for="f-varie">Note</label>
+          <textarea id="f-varie" placeholder="Facoltative: es. 20 piantine di pomodoro, 12 bottiglie da 1 litro…"></textarea>
+        </div>
+        <button type="submit" class="bottone primario">💾 Salva la spesa</button>
+      </div>
+    </form>`;
+}
+
+function salvaNuovaSpesa(evento){
+  evento.preventDefault();
+  const importo = importoDaTesto($("#f-importo").value);
+  if (!(importo > 0)){
+    avviso("L'importo deve essere maggiore di zero.", true);
+    $("#f-importo").focus();
+    return;
+  }
+  const data = $("#f-data").value || oggiIso();
+  stato.spese.push({
+    id: prossimoId(),
+    data,
+    azione: $("#f-azione").value,
+    spesa: importo,
+    varie: $("#f-varie").value.trim(),
+  });
+  if (!salvaStato()) return;
+  vibra(18);
+  avviso("✅ Spesa registrata");
+  vai("dashboard");
+}
+
+/* =========================================================== STORICO ==== */
+function vistaStorico(){
+  const spese = ordinaSpese(stato.spese);
+  if (!spese.length) return `<h1 class="titolo">Storico</h1><div class="pannello"><div class="vuoto">Nessuna spesa registrata.</div></div>`;
+
+  return `
+    <h1 class="titolo">Storico</h1>
+    <div class="sottotitolo">${spese.length} ${spese.length === 1 ? "voce" : "voci"} · ${euro(somma(spese))} totali</div>
+    <div class="pannello">
+      ${spese.map(v => rigaSpesa(v)).join("")}
+    </div>`;
+}
+
+function ordinaSpese(elenco){
+  return [...elenco].sort((a, b) => {
+    const d = String(b.data).localeCompare(String(a.data));
+    return d !== 0 ? d : (Number(b.id) || 0) - (Number(a.id) || 0);
+  });
+}
+
+function coloreCategoria(azione){
+  const i = AZIONI.indexOf(azione);
+  return PALETTE[(i < 0 ? AZIONI.length : i) % PALETTE.length];
+}
+
+function rigaSpesa(v){
+  return `
+    <div class="voce-spesa">
+      <span class="segno" style="background:${coloreCategoria(v.azione)}"></span>
+      <span class="corpo">
+        <span class="prima">
+          <span class="categoria">${esc(v.azione)}</span>
+          <span class="importo">${euro(v.spesa)}</span>
+        </span>
+        <span class="dopo"><span>${dataIt(v.data)}</span></span>
+        ${v.varie ? `<span class="varie">${esc(v.varie)}</span>` : ""}
+      </span>
+    </div>`;
+}
+
+/* ======================================================= STATISTICHE ==== */
+function vistaStatistiche(){
+  const spese = stato.spese;
+  if (!spese.length) return `<h1 class="titolo">Statistiche</h1><div class="pannello"><div class="vuoto">Nessuna spesa registrata.</div></div>`;
+
+  const totale = somma(spese);
+  const perCategoria = AZIONI
+    .map(a => ({azione:a, spesa: spese.filter(v => v.azione === a).reduce((s,v) => s + Number(v.spesa||0), 0)}))
+    .filter(c => c.spesa > 0)
+    .sort((a,b) => b.spesa - a.spesa);
+  // categorie fuori elenco (import da vecchie versioni): restano visibili
+  const altre = spese.filter(v => !AZIONI.includes(v.azione));
+  if (altre.length){
+    perCategoria.push({azione:"Altre", spesa: altre.reduce((s,v) => s + Number(v.spesa||0), 0)});
+  }
+
+  return `
+    <h1 class="titolo">Statistiche</h1>
+    <div class="pannello">
+      <div class="bilancio"><span class="voce">Totale generale</span></div>
+      <div style="font-size:1.9rem;font-weight:600;letter-spacing:-.02em">${euro(totale)}</div>
+      <div class="sottotitolo" style="margin:6px 0 0">${spese.length} voci su ${contaMesi(spese)} ${contaMesi(spese) === 1 ? "mese" : "mesi"}</div>
+    </div>
+    <div class="pannello">
+      <h2>Spese per voce</h2>
+      ${torta(perCategoria, totale)}
+    </div>
+    <div class="pannello">
+      <h2>Spese mese per mese</h2>
+      ${barreMensili(spese)}
+    </div>`;
+}
+
+function contaMesi(spese){
+  return new Set(spese.map(v => String(v.data).slice(0,7))).size;
+}
+
+function torta(categorie, totale){
+  const R = 62, C = 2 * Math.PI * R;
+  let accumulato = 0;
+  const fette = categorie.map((c, i) => {
+    const quota = totale > 0 ? c.spesa / totale : 0;
+    const lunghezza = quota * C;
+    const giro = -90 + (accumulato / C) * 360;
+    accumulato += lunghezza;
+    const colore = c.azione === "Altre" ? "#9C9A90" : coloreCategoria(c.azione);
+    return `<circle cx="80" cy="80" r="${R}" fill="none" stroke="${colore}"
+      stroke-width="24" stroke-dasharray="${lunghezza.toFixed(2)} ${(C - lunghezza).toFixed(2)}"
+      transform="rotate(${giro.toFixed(2)} 80 80)" stroke-linecap="butt"></circle>`;
+  }).join("");
+
+  const legenda = categorie.map(c => {
+    const quota = totale > 0 ? (c.spesa / totale) * 100 : 0;
+    const colore = c.azione === "Altre" ? "#9C9A90" : coloreCategoria(c.azione);
+    return `<div class="riga">
+      <span class="pallino" style="background:${colore}"></span>
+      <span class="nome">${esc(c.azione)}</span>
+      <span class="valore">${euro(c.spesa)}</span>
+      <span class="quota">${quota.toFixed(1).replace(".", ",")}%</span>
+    </div>`;
+  }).join("");
+
+  return `
+    <div class="torta">
+      <svg viewBox="0 0 160 160" width="160" height="160" role="img" aria-label="Ripartizione delle spese per voce">
+        <circle cx="80" cy="80" r="${R}" fill="none" stroke="#DED3BC66" stroke-width="24"></circle>
+        ${fette}
+        <text x="80" y="76" text-anchor="middle" fill="#7C7666" font-size="9" letter-spacing="1">TOTALE</text>
+        <text x="80" y="92" text-anchor="middle" fill="#252729" font-size="14" font-weight="600">${euro(totale).replace("€ ", "€")}</text>
+      </svg>
+      <div class="legenda">${legenda}</div>
+    </div>`;
+}
+
+function barreMensili(spese){
+  const mesi = new Map();
+  spese.forEach(v => {
+    const chiave = String(v.data).slice(0, 7);
+    mesi.set(chiave, (mesi.get(chiave) || 0) + (Number(v.spesa) || 0));
+  });
+  const elenco = [...mesi.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  const massimo = Math.max(...elenco.map(e => e[1]), 1);
+
+  return `
+    <div class="barre">
+      ${elenco.map(([chiave, valore]) => {
+        const altezza = Math.max(3, (valore / massimo) * 118);
+        return `<div class="colonna" title="${meseIt(chiave)}: ${euro(valore)}">
+          <span class="valore">${euroFmt.format(Math.round(valore))}</span>
+          <div class="asticella" style="height:${altezza.toFixed(0)}px"></div>
+          <span class="mese">${meseBreve(chiave)}</span>
+        </div>`;
+      }).join("")}
+    </div>`;
+}
+
+/* ========================================================== GESTIONE ==== */
+function vistaGestione(){
+  const spese = ordinaSpese(stato.spese);
+  if (!spese.length) return `<h1 class="titolo">Modifica</h1><div class="pannello"><div class="vuoto">Non c'è ancora nulla da gestire.</div></div>`;
+
+  if (voceScelta !== null && !spese.some(v => Number(v.id) === Number(voceScelta))) voceScelta = null;
+  const voce = voceScelta !== null ? spese.find(v => Number(v.id) === Number(voceScelta)) : null;
+
+  const scelta = `
+    <div class="pannello">
+      <div class="campo" style="margin-bottom:0">
+        <label for="sel-voce">Voce da modificare o eliminare</label>
+        <select id="sel-voce">
+          <option value="">Scegli una voce…</option>
+          ${spese.map(v => `<option value="${v.id}" ${Number(v.id) === Number(voceScelta) ? "selected" : ""}>
+            ${esc(dataIt(v.data))} · ${esc(v.azione)} · ${euro(v.spesa)}${v.varie ? " · " + esc(tronca(v.varie, 20)) : ""}
+          </option>`).join("")}
+        </select>
+      </div>
+    </div>`;
+
+  if (!voce){
+    return `
+      <h1 class="titolo">Modifica</h1>
+      ${scelta}
+      <div class="sottotitolo" style="padding:0 4px">Scegli una voce dalla tendina: solo allora la modifica e l'eliminazione diventano disponibili.</div>`;
+  }
+
+  return `
+    <h1 class="titolo">Modifica</h1>
+    ${scelta}
+    <form id="form-modifica" autocomplete="off">
+      <div class="pannello">
+        <h2>Modifica</h2>
+        <div class="campo">
+          <label for="m-data">Data</label>
+          <input type="date" id="m-data" value="${esc(String(voce.data).slice(0,10))}" required>
+        </div>
+        <div class="campo">
+          <label for="m-azione">Voce di spesa</label>
+          <select id="m-azione">${AZIONI.map(a => `<option ${a === voce.azione ? "selected" : ""}>${a}</option>`).join("")}</select>
+        </div>
+        <div class="campo">
+          <label for="m-importo">Importo (€)</label>
+          <input type="text" id="m-importo" inputmode="decimal" value="${euroFmt.format(Number(voce.spesa)||0)}" required>
+        </div>
+        <div class="campo">
+          <label for="m-varie">Note</label>
+          <textarea id="m-varie">${esc(voce.varie || "")}</textarea>
+        </div>
+        <button type="submit" class="bottone primario">💾 Salva modifiche</button>
+      </div>
+    </form>
+    <div class="pannello">
+      <h2>Zona di eliminazione</h2>
+      <div class="sottotitolo" style="margin-bottom:12px">L'operazione non si può annullare.</div>
+      <label class="campo" style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px">
+        <input type="checkbox" id="conferma-elimina" style="margin-top:2px">
+        <span style="font-size:.85rem;color:#57534A">Confermo di voler eliminare la voce del ${dataIt(voce.data)} (${euro(voce.spesa)})</span>
+      </label>
+      <button class="bottone pericolo" id="btn-elimina" disabled>🗑 Elimina definitivamente</button>
+    </div>`;
+}
+
+function tronca(testo, massimo){
+  const s = String(testo || "");
+  return s.length > massimo ? s.slice(0, massimo).replace(/\s+$/, "") + "…" : s;
+}
+
+function salvaModifica(evento){
+  evento.preventDefault();
+  if (voceScelta === null) return;
+  const importo = importoDaTesto($("#m-importo").value);
+  if (!(importo > 0)){
+    avviso("L'importo deve essere maggiore di zero.", true);
+    $("#m-importo").focus();
+    return;
+  }
+  const voce = stato.spese.find(v => Number(v.id) === Number(voceScelta));
+  if (!voce) return;
+  voce.data = $("#m-data").value || voce.data;
+  voce.azione = $("#m-azione").value;
+  voce.spesa = importo;
+  voce.varie = $("#m-varie").value.trim();
+  if (!salvaStato()) return;
+  vibra(18);
+  avviso("✅ Modifiche salvate");
+  voceScelta = null;
+  disegna();
+}
+
+function eliminaVoce(){
+  if (voceScelta === null) return;
+  const prima = stato.spese.length;
+  stato.spese = stato.spese.filter(v => Number(v.id) !== Number(voceScelta));
+  if (stato.spese.length === prima) return;
+  if (!salvaStato()) return;
+  vibra([14, 40, 14]);
+  avviso("🗑 Voce eliminata");
+  voceScelta = null;
+  disegna();
+}
+
+/* ============================================================ BACKUP ==== */
+function vistaBackup(){
+  const spese = stato.spese;
+  const ultimo = stato.ultimaEsportazione
+    ? `${adessoDi(stato.ultimaEsportazione)} · ${stato.vociAllUltimoBackup || 0} voci al momento dell'export`
+    : "Mai eseguito";
+
+  return `
+    <h1 class="titolo">Backup e impostazioni</h1>
+    <div class="sottotitolo">I dati stanno solo su questo dispositivo. Una copia è l'unica difesa.</div>
+
+    <div class="pannello">
+      <h2>Stato</h2>
+      <div style="font-size:.86rem;color:var(--tenue);line-height:1.6">
+        ${spese.length} ${spese.length === 1 ? "voce" : "voci"} in archivio · ${euro(somma(spese))}<br>
+        Ultimo backup: <strong style="color:var(--testo)">${esc(ultimo)}</strong>
+      </div>
+    </div>
+
+    <div class="pannello">
+      <h2>Esporta</h2>
+      <button class="bottone primario" id="btn-export-json" style="margin-bottom:8px">⬇️ Backup completo (JSON)</button>
+      <button class="bottone" id="btn-condividi" style="margin-bottom:8px">📤 Condividi su OneDrive / Drive</button>
+      <button class="bottone" id="btn-export-csv" style="margin-bottom:4px">📊 Tabella per Excel (CSV)</button>
+      <div style="font-size:.75rem;color:var(--tenue);line-height:1.45;margin-top:8px">
+        Il JSON serve a ripristinare tutto esattamente com'è. Il CSV si apre in Excel e serve per leggere, non per ripristinare.
+      </div>
+    </div>
+
+    <div class="pannello">
+      <h2>Importa</h2>
+      <label class="bottone" for="file-importa" style="margin-bottom:8px">📥 Scegli un file di backup</label>
+      <input type="file" id="file-importa" accept=".json,application/json" style="display:none">
+      <div style="font-size:.75rem;color:var(--tenue);line-height:1.45;margin-top:8px">
+        È il gesto che ti salva dopo una formattazione del telefono: apri l'app, scegli il backup, ripristini.
+      </div>
+    </div>
+
+    ${importInAttesa ? pannelloImport() : ""}
+
+    <div class="pannello">
+      <h2>PIN di accesso</h2>
+      ${stato.pin
+        ? `<div style="font-size:.82rem;color:var(--tenue);margin-bottom:12px">Il PIN è attivo: l'app lo chiede a ogni apertura.</div>
+           <form id="form-pin" style="margin-bottom:8px">
+             <div class="campo"><label for="p-pin">Nuovo PIN (4-8 cifre)</label>
+               <input type="password" id="p-pin" inputmode="numeric" autocomplete="new-password" maxlength="8" placeholder="••••"></div>
+             <button class="bottone" type="submit">Cambia PIN</button>
+           </form>
+           <button class="bottone pericolo minuto" id="btn-togli-pin">Togli il PIN</button>`
+        : `<div style="font-size:.82rem;color:var(--tenue);margin-bottom:12px">Nessun PIN impostato: l'app si apre direttamente.</div>
+           <form id="form-pin">
+             <div class="campo"><label for="p-pin">Imposta un PIN (4-8 cifre)</label>
+               <input type="password" id="p-pin" inputmode="numeric" autocomplete="new-password" maxlength="8" placeholder="••••"></div>
+             <button class="bottone" type="submit">Attiva PIN</button>
+           </form>`}
+    </div>
+
+    <div class="pannello">
+      <h2>Zona di eliminazione</h2>
+      <div style="font-size:.82rem;color:var(--tenue);line-height:1.45;margin-bottom:12px">
+        Cancella tutte le ${spese.length} voci da questo dispositivo. Se non hai esportato un backup, non si recupera.
+      </div>
+      <label class="campo" style="display:flex;gap:10px;align-items:flex-start;margin-bottom:12px">
+        <input type="checkbox" id="conferma-azzera" style="margin-top:2px">
+        <span style="font-size:.85rem;color:#57534A">Confermo di voler cancellare tutto</span>
+      </label>
+      <button class="bottone pericolo" id="btn-azzera" disabled>🗑 Azzera tutti i dati</button>
+    </div>
+
+    <div class="piede">Ortu Lupiae v${VERSIONE} · Via di Livenza, Lecce<br>Dati salvati in locale: nessun server, nessun account.</div>`;
+}
+
+function adessoDi(iso){
+  const d = new Date(iso);
+  if (isNaN(d)) return String(iso);
+  const p = n => String(n).padStart(2,"0");
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/* ------------------------------------------------------------ export ---- */
+function nomeFile(estensione){
+  const d = new Date(), p = n => String(n).padStart(2,"0");
+  return `ortulupiae-${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}.${estensione}`;
+}
+
+function documentoBackup(){
+  return {
+    app: "Ortu Lupiae",
+    tipo: "backup",
+    versione: 1,
+    esportato: new Date().toISOString(),
+    spese: stato.spese.map(v => ({
+      id: Number(v.id), data: String(v.data).slice(0,10),
+      azione: String(v.azione), spesa: Number(v.spesa), varie: String(v.varie || ""),
+    })),
+  };
+}
+
+function segnaEsportazione(){
+  stato.ultimaEsportazione = new Date().toISOString();
+  stato.vociAllUltimoBackup = stato.spese.length;
+  salvaStato();
+}
+
+function esportaJson(){
+  if (!stato.spese.length){ avviso("Non c'è nulla da esportare.", true); return; }
+  const testo = JSON.stringify(documentoBackup(), null, 2);
+  scarica(new Blob([testo], {type:"application/json"}), nomeFile("json"));
+  segnaEsportazione();
+  vibra(14);
+  avviso("✅ Backup esportato");
+  disegna();
+}
+
+function esportaCsv(){
+  if (!stato.spese.length){ avviso("Non c'è nulla da esportare.", true); return; }
+  const righe = ordinaSpese(stato.spese).map(v => [
+    dataIt(v.data), v.azione, euroFmt.format(Number(v.spesa) || 0), v.varie || "",
+  ].map(cellaCsv).join(";"));
+  const testo = "\uFEFF" + ["Data;Voce;Importo;Note", ...righe].join("\r\n");
+  scarica(new Blob([testo], {type:"text/csv;charset=utf-8"}), nomeFile("csv"));
+  segnaEsportazione();
+  vibra(14);
+  avviso("✅ CSV esportato");
+  disegna();
+}
+function cellaCsv(valore){
+  const s = String(valore ?? "");
+  return /[";\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+function scarica(blob, nome){
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = nome; a.rel = "noopener";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+}
+
+async function condividi(){
+  if (!stato.spese.length){ avviso("Non c'è nulla da esportare.", true); return; }
+  const testo = JSON.stringify(documentoBackup(), null, 2);
+  const file = new File([testo], nomeFile("json"), {type:"application/json"});
+  if (navigator.canShare && navigator.canShare({files:[file]})){
+    try {
+      await navigator.share({files:[file], title:"Backup Ortu Lupiae", text:"Backup delle spese dell'orto"});
+      segnaEsportazione();
+      avviso("✅ Copia inviata");
+      disegna();
+      return;
+    } catch (e){
+      if (e && e.name === "AbortError") return;   // ha annullato lui
+    }
+  }
+  // se la condivisione non c'è, si ripiega sul download
+  esportaJson();
+}
+
+/* ------------------------------------------------------------ import ---- */
+function leggiFileImport(evento){
+  const file = evento.target.files && evento.target.files[0];
+  evento.target.value = "";
+  if (!file) return;
+
+  const lettore = new FileReader();
+  lettore.onload = () => {
+    let dati;
+    try { dati = JSON.parse(String(lettore.result)); }
+    catch (e){ avviso("Il file non è un backup valido.", true); return; }
+
+    const voci = normalizzaSpese(dati);
+    if (!voci){ avviso("Il file non contiene voci riconoscibili.", true); return; }
+    if (!voci.length){ avviso("Il backup è vuoto.", true); return; }
+
+    const esistenti = new Set(stato.spese.map(firma));
+    const nuove = voci.filter(v => !esistenti.has(firma(v)));
+
+    importInAttesa = {voci, nuove};
+    avviso(`File letto: ${voci.length} ${voci.length === 1 ? "voce" : "voci"}. Scegli cosa farne.`);
+    disegna();
+  };
+  lettore.onerror = () => avviso("Non riesco a leggere il file.", true);
+  lettore.readAsText(file, "utf-8");
+}
+
+/* Il file è stato letto: si mostra cosa contiene e si lascia decidere con due pulsanti.
+   Niente caselle di testo da compilare: il ripristino deve essere a prova di fretta. */
+function pannelloImport(){
+  const {voci, nuove} = importInAttesa;
+  const gia = voci.length - nuove.length;
+  const plurale = (n, sing, plur) => `${n} ${n === 1 ? sing : plur}`;
+
+  return `
+    <div class="pannello" style="border-color:#C6CFB2;background:#F5F2E4">
+      <h2>File di backup letto</h2>
+      <div style="font-size:.85rem;color:#5A574C;line-height:1.6;margin-bottom:14px">
+        Contiene <strong style="color:var(--testo)">${plurale(voci.length, "voce", "voci")}</strong> ·
+        sul dispositivo ce ne sono <strong style="color:var(--testo)">${stato.spese.length}</strong> ·
+        non ancora presenti: <strong style="color:var(--testo)">${nuove.length}</strong>${gia > 0 ? ` (${gia} già ${gia === 1 ? "c'è" : "ci sono"})` : ""}.
+      </div>
+      <button class="bottone primario" id="btn-import-sostituisci" style="margin-bottom:8px">
+        ↦ Sostituisci tutto con il file
+      </button>
+      <button class="bottone" id="btn-import-aggiungi" style="margin-bottom:8px" ${nuove.length ? "" : "disabled"}>
+        + Aggiungi ${plurale(nuove.length, "la voce mancante", "le voci mancanti")}
+      </button>
+      <button class="bottone minuto" id="btn-import-annulla">Annulla</button>
+      <div style="font-size:.75rem;color:var(--tenue);line-height:1.45;margin-top:10px">
+        «Sostituisci» cancella quello che c'è ora sul dispositivo. Usalo quando ripristini
+        su un telefono nuovo o formattato.
+      </div>
+    </div>`;
+}
+
+function applicaImport(modo){
+  if (!importInAttesa) return;
+  const {voci, nuove} = importInAttesa;
+
+  if (modo === "sostituisci"){
+    stato.spese = voci.map(v => ({...v, id: 0}));
+    riassegnaId();
+    importInAttesa = null;
+    if (!salvaStato()) return;
+    vibra(18);
+    avviso(`✅ Archivio sostituito: ${stato.spese.length} voci`);
+  } else {
+    nuove.forEach(v => stato.spese.push({...v, id: prossimoId()}));
+    importInAttesa = null;
+    if (!salvaStato()) return;
+    vibra(18);
+    avviso(nuove.length ? `✅ Aggiunte ${nuove.length} voci` : "Nessuna voce nuova da aggiungere");
+  }
+  vai("storico");
+}
+
+function annullaImport(){
+  importInAttesa = null;
+  avviso("Importazione annullata");
+  disegna();
+}
+
+function firma(v){
+  return [String(v.data).slice(0,10), v.azione, Number(v.spesa).toFixed(2), String(v.varie || "").trim()].join("|");
+}
+function riassegnaId(){
+  stato.spese
+    .sort((a,b) => String(a.data).localeCompare(String(b.data)))
+    .forEach((v, i) => { v.id = i + 1; });
+}
+function normalizzaSpese(dati){
+  const elenco = Array.isArray(dati) ? dati : (dati && Array.isArray(dati.spese) ? dati.spese : null);
+  if (!elenco) return null;
+  return elenco.map(v => {
+    const importo = typeof v.spesa === "number" ? v.spesa : importoDaTesto(v.spesa);
+    let data = String(v.data || "").slice(0,10);
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(data)){
+      const [g,m,a] = data.split("/");
+      data = `${a}-${m}-${g}`;
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || !Number.isFinite(importo)) return null;
+    return {data, azione: String(v.azione || "Altro"), spesa: Math.round(importo * 100) / 100, varie: String(v.varie || "")};
+  }).filter(Boolean);
+}
+
+async function importaSeme(){
+  if (!semeLetto || !semeLetto.length) return;
+  semeLetto.forEach(v => stato.spese.push({...v, id: prossimoId()}));
+  if (!salvaStato()) return;
+  vibra(18);
+  avviso(`✅ Importate ${semeLetto.length} voci`);
+  semeLetto = null;
+  vai("storico");
+}
+
+/* ------------------------------------------------------ impostazioni ---- */
+function cambiaPin(evento){
+  evento.preventDefault();
+  const valore = $("#p-pin").value.trim();
+  if (!/^\d{4,8}$/.test(valore)){
+    avviso("Il PIN deve avere da 4 a 8 cifre.", true);
+    return;
+  }
+  stato.pin = valore;
+  salvaStato();
+  avviso("✅ PIN aggiornato");
+  disegna();
+}
+function togliPin(){
+  stato.pin = "";
+  salvaStato();
+  avviso("PIN disattivato");
+  aggiornaBlocca();
+  disegna();
+}
+function azzeraTutto(){
+  stato.spese = [];
+  stato.vociAllUltimoBackup = 0;
+  salvaStato();
+  vibra([20, 60, 20]);
+  avviso("🗑 Archivio svuotato");
+  vai("dashboard");
+}
+
+/* ============================================================ BLOCCO ==== */
+function aggiornaBlocca(){
+  $("#btn-blocca").hidden = !stato.pin;
+}
+function mostraBlocco(modo){
+  const blocco = $("#blocco");
+  blocco.classList.add("visibile");
+
+  if (modo === "benvenuto"){
+    $("#blocco-titolo").textContent = "Benvenuto";
+    $("#blocco-nota").textContent = "Questa app tiene le spese dell'orto solo su questo telefono. Un PIN evita che le legga chi prende in mano il dispositivo. È facoltativo.";
+    $("#blocco-box").innerHTML = `
+      <div class="campo"><input type="password" id="nuovo-pin" inputmode="numeric" maxlength="8" placeholder="PIN"></div>
+      <button class="bottone primario" id="btn-attiva" style="margin-bottom:8px">Attiva il PIN</button>
+      <button class="bottone" id="btn-salta">Continua senza PIN</button>`;
+    $("#blocco-errore").textContent = "";
+    $("#btn-attiva").addEventListener("click", () => {
+      const valore = $("#nuovo-pin").value.trim();
+      if (!/^\d{4,8}$/.test(valore)){
+        $("#blocco-errore").textContent = "Il PIN deve avere da 4 a 8 cifre.";
+        return;
+      }
+      stato.pin = valore;
+      stato.inizializzato = true;
+      salvaStato();
+      sblocca();
+    });
+    $("#btn-salta").addEventListener("click", () => {
+      stato.pin = "";
+      stato.inizializzato = true;
+      salvaStato();
+      sblocca();
+    });
+    $("#nuovo-pin").focus();
+    return;
+  }
+
+  $("#blocco-titolo").textContent = "Ortu Lupiae";
+  $("#blocco-nota").textContent = "Accesso riservato";
+  $("#blocco-box").innerHTML = `
+    <div class="campo"><input type="password" id="pin-inserito" inputmode="numeric" maxlength="8" placeholder="PIN" autocomplete="current-password"></div>
+    <button class="bottone primario" id="btn-accedi">Accedi</button>`;
+  $("#blocco-errore").textContent = "";
+  const campo = $("#pin-inserito");
+  campo.focus();
+  const prova = () => {
+    if (campo.value.trim() === stato.pin) sblocca();
+    else {
+      $("#blocco-errore").textContent = "PIN errato";
+      campo.value = "";
+      campo.classList.remove("scuoti");
+      void campo.offsetWidth;
+      campo.classList.add("scuoti");
+      vibra([40, 60, 40]);
+      campo.focus();
+    }
+  };
+  $("#btn-accedi").addEventListener("click", prova);
+  campo.addEventListener("keydown", e => { if (e.key === "Enter") prova(); });
+}
+
+function sblocca(){
+  $("#blocco").classList.remove("visibile");
+  aggiornaBlocca();
+  vai("dashboard");
+}
+
+function blocca(){
+  if (!stato.pin) return;
+  mostraBlocco("accesso");
+}
+
+/* ============================================================ AVVIO ==== */
+async function leggiSeme(){
+  try {
+    const risposta = await fetch("dati-iniziali.json", {cache:"no-store"});
+    if (!risposta.ok) return;
+    const dati = await risposta.json();
+    const voci = normalizzaSpese(dati);
+    if (voci && voci.length) semeLetto = voci;
+  } catch (e){
+    /* aperta come file locale o senza dati: nessun problema */
+  }
+}
+
+function avvio(){
+  stato = caricaStato();
+  disegnaLinguette();
+
+  $("#btn-backup").addEventListener("click", () => { vibra(8); vai("backup"); });
+  $("#btn-blocca").addEventListener("click", blocca);
+
+  if (!stato.spese.length && !semeOfferto){
+    semeOfferto = true;
+    leggiSeme().then(() => { if (vistaCorrente === "dashboard") disegna(); });
+  }
+
+  if (!stato.inizializzato){
+    mostraBlocco("benvenuto");
+    return;
+  }
+  if (stato.pin){
+    mostraBlocco("accesso");
+    return;
+  }
+  sblocca();
+}
+
+/* Service worker: dà l'offline quando l'app è servita da https o localhost. */
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+
+document.addEventListener("DOMContentLoaded", avvio);
+</script>
+</body>
+</html>
